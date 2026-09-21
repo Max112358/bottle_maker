@@ -993,11 +993,16 @@
 
       document.getElementById("btnExportGlb").addEventListener("click", () => {
         const exporter = new GLTFExporter();
+
         exporter.parse(
           bottleGroup,
           (gltf) => {
-            const blob = new Blob([gltf], { type: "application/octet-stream" });
+            const blob = new Blob([gltf], { type: "model/gltf-binary" });
             download(blob, "bottle.glb");
+          },
+          (error) => {
+            console.error("GLB export failed:", error);
+            alert("GLB export failed. See the console for details.");
           },
           { binary: true, onlyVisible: true },
         );
