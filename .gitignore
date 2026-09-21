@@ -4,7 +4,7 @@ node_modules/
 .yarn/
 
 # Build Output
-dist/
+#dist/
 dist-ssr/
 build/
 *.local

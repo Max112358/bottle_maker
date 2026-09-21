@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Bottle Maker</title>
+    <style>*{box-sizing:border-box}html,body{color:#eee;background:#111;height:100%;margin:0;font-family:system-ui,sans-serif;overflow:hidden}#app{height:100vh;display:flex}#sidebar{background:#1a1a1a;border-right:1px solid #333;flex-direction:column;width:320px;padding:16px;display:flex;overflow-y:auto}#viewport{flex:1;position:relative}canvas{width:100%;height:100%;display:block}h2{color:#fff;margin:0 0 12px;font-size:18px}.field{margin-bottom:12px}.field label{color:#ccc;justify-content:space-between;margin-bottom:4px;font-size:13px;display:flex}.field input[type=range]{width:100%}.field input[type=color]{cursor:pointer;border:none;width:100%;height:36px}.field input[type=text],.field select{color:#fff;background:#333;border:1px solid #555;border-radius:4px;width:100%;padding:6px;font-family:inherit}.btn-row{flex-wrap:wrap;gap:8px;margin-bottom:16px;display:flex}button{color:#fff;cursor:pointer;background:#3b82f6;border:none;border-radius:6px;padding:8px 12px;font-size:13px}button:hover{background:#2563eb}input[type=file]{display:none}.section-title{color:#aaa;border-bottom:1px solid #333;margin:12px 0 6px;padding-bottom:4px;font-size:14px}.checkbox-row{color:#ccc;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;display:flex}</style>
+    <script type="module" crossorigin src="/assets/index-Cqy3_gDZ.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div id="sidebar">
+        <h2>Bottle Parameters</h2>
+        <div class="btn-row">
+          <button id="btnExportGlb">Export GLB</button>
+          <button id="btnExportJson">Export JSON</button>
+          <button id="btnImportJson">Import JSON</button>
+          <input
+            type="file"
+            id="fileImportJson"
+            accept="application/json,.json"
+          />
+        </div>
+
+        <div class="section-title">Label Options</div>
+        <div class="checkbox-row">
+          <label for="showLabel">Affix Paper Label</label>
+          <input type="checkbox" id="showLabel" />
+        </div>
+        <div id="labelOptions" style="display: none">
+          <div class="field">
+            <label>Label Text</label>
+            <input type="text" id="labelText" value="Elixir" />
+          </div>
+          <div class="field">
+            <label>Font Style</label>
+            <select id="labelFont">
+              <option value="fantasy">Medieval (Fantasy)</option>
+              <option value="Georgia, serif">Classic (Serif)</option>
+              <option value="'Brush Script MT', cursive">
+                Script (Cursive)
+              </option>
+              <option value="'Courier New', monospace">
+                Typewriter (Monospace)
+              </option>
+              <option value="Impact, sans-serif">Bold (Impact)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label
+              >Font Size (×0.1 mm) <span id="val-labelFontSize">80</span></label
+            >
+            <input
+              type="range"
+              id="labelFontSize"
+              min="20"
+              max="200"
+              step="2"
+              value="80"
+            />
+          </div>
+          <div class="field">
+            <label>Label Height (mm) <span id="val-labelH">18</span></label>
+            <input
+              type="range"
+              id="labelH"
+              min="5"
+              max="60"
+              step="1"
+              value="18"
+            />
+          </div>
+          <div class="field">
+            <label>Label Wrap Angle <span id="val-labelW">0.80</span></label>
+            <input
+              type="range"
+              id="labelW"
+              min="0.1"
+              max="1.8"
+              step="0.05"
+              value="0.80"
+            />
+          </div>
+        </div>
+
+        <div class="section-title">Diameters (mm)</div>
+        <div class="field">
+          <label>Base Diameter <span id="val-baseD">30</span></label>
+          <input
+            type="range"
+            id="baseD"
+            min="1"
+            max="100"
+            step="1"
+            value="30"
+          />
+        </div>
+        <div class="field">
+          <label>Middle Diameter <span id="val-middleD">22</span></label>
+          <input
+            type="range"
+            id="middleD"
+            min="1"
+            max="100"
+            step="1"
+            value="22"
+          />
+        </div>
+        <div class="field">
+          <label>Neck Diameter <span id="val-neckD">11</span></label>
+          <input
+            type="range"
+            id="neckD"
+            min="1"
+            max="100"
+            step="1"
+            value="11"
+          />
+        </div>
+        <div class="field">
+          <label>Neck Upper Diameter <span id="val-neckUpperD">10</span></label>
+          <input
+            type="range"
+            id="neckUpperD"
+            min="1"
+            max="100"
+            step="1"
+            value="10"
+          />
+        </div>
+        <div class="field">
+          <label>Lip Diameter <span id="val-lipD">12</span></label>
+          <input type="range" id="lipD" min="1" max="100" step="1" value="12" />
+        </div>
+
+        <div class="section-title">Heights (mm)</div>
+        <div class="field">
+          <label>Middle Height <span id="val-middleH">30</span></label>
+          <input
+            type="range"
+            id="middleH"
+            min="1"
+            max="100"
+            step="1"
+            value="30"
+          />
+        </div>
+        <div class="field">
+          <label>Neck Height <span id="val-neckH">10</span></label>
+          <input
+            type="range"
+            id="neckH"
+            min="1"
+            max="100"
+            step="1"
+            value="10"
+          />
+        </div>
+        <div class="field">
+          <label>Neck Upper Height <span id="val-neckUpperH">4</span></label>
+          <input
+            type="range"
+            id="neckUpperH"
+            min="1"
+            max="100"
+            step="1"
+            value="4"
+          />
+        </div>
+        <div class="field">
+          <label>Lip Height <span id="val-lipH">3</span></label>
+          <input type="range" id="lipH" min="1" max="100" step="1" value="3" />
+        </div>
+
+        <div class="section-title">Wall & Fill</div>
+        <div class="field">
+          <label>Wall Thickness <span id="val-wall">3</span></label>
+          <input type="range" id="wall" min="1" max="30" step="0.5" value="3" />
+        </div>
+        <div class="field">
+          <label>Liquid Fill Height <span id="val-liquidH">30</span></label>
+          <input
+            type="range"
+            id="liquidH"
+            min="1"
+            max="100"
+            step="1"
+            value="30"
+          />
+        </div>
+        <div class="field">
+          <label>Liquid Density <span id="val-liquidOpacity">0.90</span></label>
+          <input
+            type="range"
+            id="liquidOpacity"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.90"
+          />
+        </div>
+        <div class="field">
+          <label>Interior / Liquid Color</label>
+          <input type="color" id="liquidColor" value="#d94436" />
+        </div>
+      </div>
+      <div id="viewport"></div>
+    </div>
+
+  </body>
+</html>
