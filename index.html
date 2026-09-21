@@ -110,6 +110,11 @@
         color: #ccc;
         margin-bottom: 12px;
       }
+      .count-row {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 12px;
+      }
     </style>
   </head>
   <body>
@@ -124,6 +129,79 @@
             type="file"
             id="fileImportJson"
             accept="application/json,.json"
+          />
+        </div>
+        <div class="count-row">
+          Estimated triangles: <span id="triCount">-</span>
+        </div>
+
+        <div class="section-title">Mesh Resolution</div>
+        <div class="field">
+          <label>Glass Sides <span id="val-glassSegs">20</span></label>
+          <input
+            type="range"
+            id="glassSegs"
+            min="3"
+            max="96"
+            step="1"
+            value="20"
+          />
+        </div>
+        <div class="field">
+          <label>Liquid Sides <span id="val-liquidSegs">20</span></label>
+          <input
+            type="range"
+            id="liquidSegs"
+            min="3"
+            max="96"
+            step="1"
+            value="20"
+          />
+        </div>
+        <div class="field">
+          <label
+            >Liquid Vertical Rings <span id="val-liquidRings">8</span></label
+          >
+          <input
+            type="range"
+            id="liquidRings"
+            min="2"
+            max="40"
+            step="1"
+            value="8"
+          />
+        </div>
+        <div class="field">
+          <label>Label Sides <span id="val-labelSegs">12</span></label>
+          <input
+            type="range"
+            id="labelSegs"
+            min="1"
+            max="64"
+            step="1"
+            value="12"
+          />
+        </div>
+        <div class="field">
+          <label>Cork Sides <span id="val-corkSegs">12</span></label>
+          <input
+            type="range"
+            id="corkSegs"
+            min="3"
+            max="64"
+            step="1"
+            value="12"
+          />
+        </div>
+        <div class="field">
+          <label>Cork Height Steps <span id="val-corkRings">8</span></label>
+          <input
+            type="range"
+            id="corkRings"
+            min="2"
+            max="32"
+            step="1"
+            value="8"
           />
         </div>
 
@@ -173,17 +251,6 @@
               max="60"
               step="1"
               value="18"
-            />
-          </div>
-          <div class="field">
-            <label>Label Wrap Angle <span id="val-labelW">0.80</span></label>
-            <input
-              type="range"
-              id="labelW"
-              min="0.1"
-              max="1.8"
-              step="0.05"
-              value="0.80"
             />
           </div>
         </div>
@@ -337,7 +404,12 @@
         "labelFont",
         "labelFontSize",
         "labelH",
-        "labelW",
+        "glassSegs",
+        "liquidSegs",
+        "liquidRings",
+        "labelSegs",
+        "corkSegs",
+        "corkRings",
       ];
       const inputs = {};
       ids.forEach((id) => (inputs[id] = document.getElementById(id)));
@@ -569,11 +641,9 @@
         canvas.height = texH;
         const ctx = canvas.getContext("2d");
 
-        // Base parchment
         ctx.fillStyle = "#c19a6b";
         ctx.fillRect(0, 0, texW, texH);
 
-        // Paper noise
         const img = ctx.getImageData(0, 0, texW, texH);
         for (let i = 0; i < img.data.length; i += 4) {
           const noise = (Math.random() - 0.5) * 25;
@@ -589,7 +659,6 @@
         }
         ctx.putImageData(img, 0, 0);
 
-        // Aged edges
         const grad = ctx.createRadialGradient(
           texW / 2,
           texH / 2,
@@ -603,7 +672,6 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, texW, texH);
 
-        // Border lines scaled to the label size
         const marginX = Math.max(8, texW * 0.04);
         const marginY = Math.max(8, texH * 0.08);
         ctx.strokeStyle = "rgba(50, 30, 20, 0.8)";
@@ -622,7 +690,6 @@
           texH - (marginY + texH * 0.01) * 2,
         );
 
-        // Draw text at a real-world size (fontSize ≈ tenths of a millimetre)
         ctx.fillStyle = "#1c1511";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -654,27 +721,17 @@
       const corkTex = createCorkTexture();
 
       function getValues() {
-        return {
-          baseD: +inputs.baseD.value,
-          middleD: +inputs.middleD.value,
-          neckD: +inputs.neckD.value,
-          neckUpperD: +inputs.neckUpperD.value,
-          lipD: +inputs.lipD.value,
-          middleH: +inputs.middleH.value,
-          neckH: +inputs.neckH.value,
-          neckUpperH: +inputs.neckUpperH.value,
-          lipH: +inputs.lipH.value,
-          wall: +inputs.wall.value,
-          liquidH: +inputs.liquidH.value,
-          liquidOpacity: +inputs.liquidOpacity.value,
-          liquidColor: inputs.liquidColor.value,
-          showLabel: inputs.showLabel.checked,
-          labelText: inputs.labelText.value,
-          labelFont: inputs.labelFont.value,
-          labelFontSize: +inputs.labelFontSize.value,
-          labelH: +inputs.labelH.value,
-          labelW: +inputs.labelW.value,
-        };
+        const out = {};
+        ids.forEach((id) => {
+          if (inputs[id].type === "checkbox") {
+            out[id] = inputs[id].checked;
+          } else if (inputs[id].type === "range") {
+            out[id] = +inputs[id].value;
+          } else {
+            out[id] = inputs[id].value;
+          }
+        });
+        return out;
       }
 
       function setValues(obj) {
@@ -726,6 +783,38 @@
           }
         }
         return 0;
+      }
+
+      function countLatheTris(points, radialSegs) {
+        const rings = points.length - 1;
+        return (rings - 1) * radialSegs * 2;
+      }
+
+      function estimateTris(p) {
+        const glassRings = 11;
+        const liquidRings = p.liquidRings + 2;
+        let total = countLatheTris(new Array(glassRings).fill(0), p.glassSegs);
+        total += countLatheTris(new Array(liquidRings).fill(0), p.liquidSegs);
+        if (p.showLabel) {
+          const bottleSegs = Math.max(3, p.glassSegs);
+          const faces = Math.max(1, Math.min(p.labelSegs, bottleSegs));
+          total += faces * 4; // 2 tris per segment × front + back
+        }
+        total += countLatheTris(new Array(p.corkRings + 2).fill(0), p.corkSegs);
+        return Math.round(total);
+      }
+
+      function frontFaceAngle(segments) {
+        if (segments < 3) return Math.PI / 2;
+        const faceSpan = (Math.PI * 2) / segments;
+        const k = Math.round((Math.PI / 2 - faceSpan / 2) / faceSpan);
+        return k * faceSpan + faceSpan / 2;
+      }
+
+      function nearestFaceCenterAngle(segments, targetAngle = Math.PI / 2) {
+        const span = (Math.PI * 2) / Math.max(3, segments);
+        const k = Math.round((targetAngle - span / 2) / span);
+        return k * span + span / 2;
       }
 
       function buildBottle() {
@@ -802,8 +891,7 @@
           labelGroup = null;
         }
 
-        // --- Glass shell ---
-        const glassGeo = new THREE.LatheGeometry(glassPoints, 20);
+        const glassGeo = new THREE.LatheGeometry(glassPoints, p.glassSegs);
         const glassMat = new THREE.MeshPhysicalMaterial({
           color: 0xffffff,
           metalness: 0.1,
@@ -842,24 +930,22 @@
           const tTop = Math.max(0, Math.min(1, yTop / (p.middleH || 1)));
           const tBot = Math.max(0, Math.min(1, yBottom / (p.middleH || 1)));
 
-          const radiusTop = rBase + (rMid - rBase) * tTop + 0.12;
-          const radiusBottom = rBase + (rMid - rBase) * tBot + 0.12;
+          // Exact bottle radii at the label edges — no extra gap
+          const labelOffset = 0.06;
+          const radiusTop = rBase + (rMid - rBase) * tTop + labelOffset;
+          const radiusBottom = rBase + (rMid - rBase) * tBot + labelOffset;
 
-          const thetaLength = Math.PI * p.labelW;
-          const thetaStart = -thetaLength / 2;
+          const bottleSegs = Math.max(3, p.glassSegs);
+          const faceSpan = (Math.PI * 2) / bottleSegs;
 
-          const labelGeo = new THREE.CylinderGeometry(
-            radiusTop,
-            radiusBottom,
-            labelH,
-            12,
-            1,
-            true,
-            thetaStart,
-            thetaLength,
-          );
+          // Label covers this many whole bottle faces
+          const faces = Math.max(1, Math.min(p.labelSegs, bottleSegs));
+          const thetaLength = faces * faceSpan;
 
-          // Front face (Text side)
+          // Center the covered faces on the front-most bottle face
+          const thetaCenter = nearestFaceCenterAngle(bottleSegs);
+          const thetaStart = thetaCenter - thetaLength / 2;
+
           const labelTex = createPaperLabelTexture(
             p.labelText,
             p.labelFont,
@@ -869,40 +955,50 @@
             radiusBottom,
             thetaLength,
           );
+
           const frontMat = new THREE.MeshStandardMaterial({
             map: labelTex,
             roughness: 0.9,
             metalness: 0.0,
             side: THREE.FrontSide,
+            flatShading: true,
             depthWrite: true,
           });
-          const frontMesh = new THREE.Mesh(labelGeo, frontMat);
 
-          // Back face (Plain parchment side - blocks text from inside/back view)
           const backMat = new THREE.MeshStandardMaterial({
             color: 0xba9363,
             roughness: 0.95,
             metalness: 0.0,
             side: THREE.BackSide,
+            flatShading: true,
             depthWrite: true,
           });
-          const backMesh = new THREE.Mesh(labelGeo, backMat);
 
-          labelGroup.add(frontMesh);
-          labelGroup.add(backMesh);
+          const labelGeo = new THREE.CylinderGeometry(
+            radiusTop,
+            radiusBottom,
+            labelH,
+            faces,
+            1,
+            true,
+            thetaStart,
+            thetaLength,
+          );
+
+          labelGroup.add(new THREE.Mesh(labelGeo, frontMat));
+          labelGroup.add(new THREE.Mesh(labelGeo, backMat));
+
           labelGroup.position.y = labelYCenter;
           labelGroup.renderOrder = 3;
-
           bottleGroup.add(labelGroup);
         }
 
-        // --- Interior colored fill / liquid ---
         const eps = 0.05;
         const liquidBottom = t + eps;
         const liquidTop = Math.min(liquidBottom + p.liquidH, y4);
 
         const liqPoints = [new THREE.Vector2(0, liquidBottom)];
-        const yStep = Math.max(4, (liquidTop - liquidBottom) / 8);
+        const yStep = Math.max(0.5, (liquidTop - liquidBottom) / p.liquidRings);
         for (let y = liquidBottom; y <= liquidTop; y += yStep) {
           const r = Math.max(innerRadiusAtY(y, innerProfile) - 0.15, 0);
           liqPoints.push(new THREE.Vector2(r, y));
@@ -914,7 +1010,7 @@
         liqPoints.push(new THREE.Vector2(topR, liquidTop));
         liqPoints.push(new THREE.Vector2(0, liquidTop));
 
-        const liqGeo = new THREE.LatheGeometry(liqPoints, 20);
+        const liqGeo = new THREE.LatheGeometry(liqPoints, p.liquidSegs);
         const liqMat = new THREE.MeshPhysicalMaterial({
           color: new THREE.Color(p.liquidColor),
           metalness: 0.05,
@@ -928,7 +1024,6 @@
         liquidMesh.renderOrder = 1;
         bottleGroup.add(liquidMesh);
 
-        // --- Cork ---
         const innerLipR = Math.max(rLip - t, 0.1);
         const innerNeckR = Math.max(rNeckU - t, 0.1);
 
@@ -940,7 +1035,7 @@
         const corkTopY = corkBottomY + corkH;
 
         const corkPoints = [];
-        const segments = 8;
+        const segments = p.corkRings;
         for (let i = 0; i <= segments; i++) {
           const v = i / segments;
           const radius = corkBottomR + (corkTopR - corkBottomR) * v;
@@ -950,7 +1045,7 @@
         }
         corkPoints.push(new THREE.Vector2(0, corkTopY));
 
-        const corkGeo = new THREE.LatheGeometry(corkPoints, 12);
+        const corkGeo = new THREE.LatheGeometry(corkPoints, p.corkSegs);
         const corkMat = new THREE.MeshStandardMaterial({
           map: corkTex,
           bumpMap: corkTex,
@@ -964,6 +1059,8 @@
         corkMesh.castShadow = true;
         corkMesh.receiveShadow = true;
         bottleGroup.add(corkMesh);
+
+        document.getElementById("triCount").textContent = estimateTris(p);
       }
 
       function resize() {
