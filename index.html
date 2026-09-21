@@ -803,7 +803,7 @@
         }
 
         // --- Glass shell ---
-        const glassGeo = new THREE.LatheGeometry(glassPoints, 96);
+        const glassGeo = new THREE.LatheGeometry(glassPoints, 20);
         const glassMat = new THREE.MeshPhysicalMaterial({
           color: 0xffffff,
           metalness: 0.1,
@@ -852,7 +852,7 @@
             radiusTop,
             radiusBottom,
             labelH,
-            64,
+            12,
             1,
             true,
             thetaStart,
@@ -902,7 +902,8 @@
         const liquidTop = Math.min(liquidBottom + p.liquidH, y4);
 
         const liqPoints = [new THREE.Vector2(0, liquidBottom)];
-        for (let y = liquidBottom; y <= liquidTop; y += 1) {
+        const yStep = Math.max(4, (liquidTop - liquidBottom) / 8);
+        for (let y = liquidBottom; y <= liquidTop; y += yStep) {
           const r = Math.max(innerRadiusAtY(y, innerProfile) - 0.15, 0);
           liqPoints.push(new THREE.Vector2(r, y));
         }
@@ -913,7 +914,7 @@
         liqPoints.push(new THREE.Vector2(topR, liquidTop));
         liqPoints.push(new THREE.Vector2(0, liquidTop));
 
-        const liqGeo = new THREE.LatheGeometry(liqPoints, 96);
+        const liqGeo = new THREE.LatheGeometry(liqPoints, 20);
         const liqMat = new THREE.MeshPhysicalMaterial({
           color: new THREE.Color(p.liquidColor),
           metalness: 0.05,
@@ -939,7 +940,7 @@
         const corkTopY = corkBottomY + corkH;
 
         const corkPoints = [];
-        const segments = 16;
+        const segments = 8;
         for (let i = 0; i <= segments; i++) {
           const v = i / segments;
           const radius = corkBottomR + (corkTopR - corkBottomR) * v;
@@ -949,7 +950,7 @@
         }
         corkPoints.push(new THREE.Vector2(0, corkTopY));
 
-        const corkGeo = new THREE.LatheGeometry(corkPoints, 64);
+        const corkGeo = new THREE.LatheGeometry(corkPoints, 12);
         const corkMat = new THREE.MeshStandardMaterial({
           map: corkTex,
           bumpMap: corkTex,
