@@ -192,7 +192,7 @@ function createLabelGroup(p, rBase, rMid) {
   const tTop = Math.max(0, Math.min(1, yTop / (p.middleH || 1)));
   const tBot = Math.max(0, Math.min(1, yBottom / (p.middleH || 1)));
 
-  const labelOffset = 0.06;
+  const labelOffset = 0.25;
   const radiusTop = rBase + (rMid - rBase) * tTop + labelOffset;
   const radiusBottom = rBase + (rMid - rBase) * tBot + labelOffset;
 
