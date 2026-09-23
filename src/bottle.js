@@ -199,9 +199,9 @@ function createLabelGroup(p, rBase, rMid) {
   const bottleSegs = Math.max(3, p.glassSegs);
   const faceSpan = (Math.PI * 2) / bottleSegs;
 
+  // Width measured in whole bottle faces so edges land exactly on the glass edges.
   const faces = Math.max(1, Math.min(p.labelSegs, bottleSegs));
   const thetaLength = faces * faceSpan;
-
   const thetaCenter = nearestFaceCenterAngle(bottleSegs);
   const thetaStart = thetaCenter - thetaLength / 2;
 
@@ -220,7 +220,7 @@ function createLabelGroup(p, rBase, rMid) {
     roughness: 0.9,
     metalness: 0.0,
     side: THREE.FrontSide,
-    flatShading: true,
+    flatShading: false,
     depthWrite: true,
   });
 
@@ -229,7 +229,7 @@ function createLabelGroup(p, rBase, rMid) {
     roughness: 0.95,
     metalness: 0.0,
     side: THREE.BackSide,
-    flatShading: true,
+    flatShading: false,
     depthWrite: true,
   });
 
@@ -363,6 +363,7 @@ function estimateTris(p) {
   if (p.showLabel) {
     const bottleSegs = Math.max(3, p.glassSegs);
     const faces = Math.max(1, Math.min(p.labelSegs, bottleSegs));
+    // front face + back face, 2 triangles each
     total += faces * 4;
   }
 
